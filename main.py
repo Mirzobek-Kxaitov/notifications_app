@@ -15,9 +15,11 @@ from poster import post_ads_to_telegram
 def main():
     """Asosiy sikl - har 5 daqiqada ishlaydi"""
 
-    print("=" * 50)
+    print("=" * 60)
     print("🤖 OLX E'lonlar Bot ishga tushdi!")
-    print("=" * 50)
+    print("🚀 CI/CD TEST - Version 2.0")
+    print("✅ GitHub Actions orqali avtomatik deploy qilindi!")
+    print("=" * 60)
     print()
 
     while True:

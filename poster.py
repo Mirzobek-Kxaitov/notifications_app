@@ -3,11 +3,16 @@ import sqlite3
 from telegram import Bot
 import asyncio
 import requests
+import os
+from dotenv import load_dotenv
+
+# .env fayldan o'qish
+load_dotenv()
 
 # Sozlamalar
-BOT_TOKEN = "7284041464:AAHQGNTnUSSO1YYsOf4j_lCzd92mgLUmEeo"
-CHANNEL_ID = "-1003091682005"
-FALLBACK_RATE = 12800  # Zaxira kurs (agar API ishlamasa)
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHANNEL_ID = os.getenv("CHANNEL_ID")
+FALLBACK_RATE = int(os.getenv("FALLBACK_RATE", 12800))  # Zaxira kurs (agar API ishlamasa)
 
 def get_usd_rate_from_api():
     """Markaziy Bank API'sidan USD kursini oladi."""

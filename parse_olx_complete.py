@@ -8,7 +8,7 @@ def parse_all_ads():
     """OLX.uz dan barcha e'lonlarni ajratib olish va bazaga saqlash"""
 
     # Toshkent shahridagi uzoq muddatli ijaraga beriladigan kvartiralar (so'mda)
-    url = "https://www.olx.uz/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/?currency=UZS"
+    url = "https://www.olx.uz/nedvizhimost/kvartiry/arenda-dolgosrochnaya/tashkent/?currency=UZS&search%5Bfilter_enum_comission%5D%5B0%5D=no"
 
     print(f"📥 Sahifa yuklanmoqda: {url}\n")
 

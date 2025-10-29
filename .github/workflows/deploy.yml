@@ -31,11 +31,14 @@ jobs:
             echo "📥 Fetching latest changes from GitHub..."
             git fetch origin main
             git reset --hard origin/main
-            git clean -fd
+            git clean -fd -e venv -e .env
 
-            # Python dependencies ni yangilash
+            # Python dependencies ni yangilash (venv ichida)
             echo "📦 Installing/updating dependencies..."
-            pip3 install -r requirements.txt || echo "requirements.txt topilmadi"
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+            venv/bin/pip install -r requirements.txt
 
             # Service ni qayta ishga tushirish
             echo "🔄 Restarting service..."

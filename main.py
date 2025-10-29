@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 OLX E'lonlar Bot - Asosiy fayl
-Har 5 daqiqada:
+Har 3 daqiqada:
 1. OLX dan yangi e'lonlarni parsing qiladi
 2. Telegram kanaliga yuboradi
 """
@@ -36,11 +36,11 @@ def main():
             print("\n📤 2/2: Telegram kanaliga yuborilmoqda...")
             asyncio.run(post_ads_to_telegram())
 
-            # 5 daqiqa kutish
+            # 3 daqiqa kutish
             print("\n✅ Iteratsiya tugadi!")
-            print("⏳ Keyingi tekshirish 5 daqiqadan so'ng...")
+            print("⏳ Keyingi tekshirish 3 daqiqadan so'ng...")
             print("=" * 50)
-            time.sleep(300)  # 5 daqiqa = 300 soniya
+            time.sleep(180)  # 3 daqiqa = 180 soniya
 
         except KeyboardInterrupt:
             print("\n\n❌ Bot to'xtatildi (Ctrl+C)")

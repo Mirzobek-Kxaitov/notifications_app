@@ -43,7 +43,7 @@ async def post_ads_to_telegram():
 
         # Yuborilmagan e'lonlarni olish (ID bo'yicha tartiblash - yangidan eskiga)
         cursor.execute('''
-            SELECT id, title, price, url
+            SELECT id, title, price, url, image_url
             FROM ads
             WHERE is_posted_to_telegram = 0
             ORDER BY id DESC
@@ -68,7 +68,7 @@ async def post_ads_to_telegram():
         posted_count = 0
 
         # Har bir e'lonni kanalga yuborish
-        for ad_id, title, price, url in ads:
+        for ad_id, title, price, url, image_url in ads:
             # Narx va manzilni ajratish (price da "narx | manzil" formatida saqlangan)
             if " | " in price:
                 price_part, location_part = price.split(" | ", 1)
@@ -145,13 +145,23 @@ async def post_ads_to_telegram():
 <a href="{url}">👉 Batafsil ko'rish</a>"""
 
             try:
-                # Kanalga xabar yuborish
-                await bot.send_message(
-                    chat_id=CHANNEL_ID,
-                    text=message_text,
-                    parse_mode='HTML',
-                    disable_web_page_preview=True
-                )
+                # Kanalga rasm bilan xabar yuborish
+                if image_url:
+                    # Rasm bilan yuborish
+                    await bot.send_photo(
+                        chat_id=CHANNEL_ID,
+                        photo=image_url,
+                        caption=message_text,
+                        parse_mode='HTML'
+                    )
+                else:
+                    # Rasm bo'lmasa oddiy xabar
+                    await bot.send_message(
+                        chat_id=CHANNEL_ID,
+                        text=message_text,
+                        parse_mode='HTML',
+                        disable_web_page_preview=True
+                    )
 
                 # Bazada yuborilganligini belgilash
                 cursor.execute('''

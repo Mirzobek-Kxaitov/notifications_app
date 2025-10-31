@@ -98,11 +98,22 @@ def parse_all_ads():
             price_tag = card.find('p', {'data-testid': 'ad-price'})
             price = price_tag.get_text(strip=True) if price_tag else "Topilmadi"
 
+            # Rasm URL
+            img_tag = card.find('img')
+            image_url = None
+            if img_tag:
+                # Kichik rasmni kattasiga o'zgartirish (s=216x152 -> s=1280x960)
+                img_src = img_tag.get('src', '')
+                if img_src and 's=' in img_src:
+                    image_url = img_src.replace('s=216x152', 's=1280x960')
+                elif img_src:
+                    image_url = img_src
+
             # Yangi e'lonni bazaga qo'shish
             cursor.execute('''
-                INSERT INTO ads (title, price, url, is_posted_to_telegram)
-                VALUES (?, ?, ?, 0)
-            ''', (title, price + " | " + location_date, link))
+                INSERT INTO ads (title, price, url, image_url, is_posted_to_telegram)
+                VALUES (?, ?, ?, ?, 0)
+            ''', (title, price + " | " + location_date, link, image_url))
 
             new_ads_count += 1
 

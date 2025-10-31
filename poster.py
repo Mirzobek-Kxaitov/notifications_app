@@ -41,12 +41,12 @@ async def post_ads_to_telegram():
         conn = sqlite3.connect('elonlar.db')
         cursor = conn.cursor()
 
-        # Yuborilmagan e'lonlarni olish (ID bo'yicha tartiblash - eskidan yangiga)
+        # Yuborilmagan e'lonlarni olish (ID bo'yicha tartiblash - yangidan eskiga)
         cursor.execute('''
             SELECT id, title, price, url
             FROM ads
             WHERE is_posted_to_telegram = 0
-            ORDER BY id ASC
+            ORDER BY id DESC
         ''')
 
         ads = cursor.fetchall()

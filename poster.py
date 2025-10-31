@@ -4,6 +4,7 @@ from telegram import Bot
 import asyncio
 import requests
 import os
+import re
 from dotenv import load_dotenv
 
 # .env fayldan o'qish
@@ -75,7 +76,6 @@ async def post_ads_to_telegram():
                 location_part = "Manzil ko'rsatilmagan"
 
             # Narxni formatlash - so'mni dollarga o'girish
-            import re
             price_clean = price_part.strip()
 
             # "сум" va raqamlarni ajratish
@@ -114,6 +114,18 @@ async def post_ads_to_telegram():
                 location_only, time_part = location_clean.rsplit(" - ", 1)
                 location_only = location_only.strip()
                 time_part = time_part.strip()
+
+                # OLX saytidan UTC vaqti keladi, O'zbekiston vaqtiga (UTC+5) o'girish
+                time_match = re.search(r'(\d{1,2}):(\d{2})', time_part)
+                if time_match:
+                    hour = int(time_match.group(1))
+                    minute = int(time_match.group(2))
+
+                    # +5 soat qo'shish
+                    hour = (hour + 5) % 24
+
+                    # Vaqtni yangi formatda almashtirish
+                    time_part = re.sub(r'\d{1,2}:\d{2}', f'{hour:02d}:{minute:02d}', time_part)
             else:
                 location_only = location_clean
                 time_part = ""

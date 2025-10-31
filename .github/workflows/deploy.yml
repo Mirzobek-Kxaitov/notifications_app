@@ -31,7 +31,10 @@ jobs:
             echo "📥 Fetching latest changes from GitHub..."
             git fetch origin main
             git reset --hard origin/main
-            git clean -fd -e venv -e .env
+
+            # Git clean - faqat tracked bo'lmagan fayllarni o'chirish
+            # .gitignore'dagi venv va .env avtomatik exclude qilinadi
+            git clean -fd
 
             # Python dependencies ni yangilash (venv ichida)
             echo "📦 Installing/updating dependencies..."

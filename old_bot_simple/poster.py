@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import sqlite3
-from telegram import Bot
+from telegram import Bot, InputMediaPhoto
 import asyncio
 import requests
 import os
 import re
 from dotenv import load_dotenv
+from selenium_parser import get_ad_details
 
 # .env fayldan o'qish
 load_dotenv()
@@ -34,7 +35,7 @@ def get_usd_rate_from_api():
         return FALLBACK_RATE
 
 async def post_ads_to_telegram():
-    """Bazadagi yangi e'lonlarni Telegram kanaliga yuborish"""
+    """Bazadagi yangi e'lonlarni Telegram kanaliga yuborish - TO'LIQ VERSIYA"""
 
     try:
         # Ma'lumotlar bazasiga ulanish
@@ -69,6 +70,9 @@ async def post_ads_to_telegram():
 
         # Har bir e'lonni kanalga yuborish
         for ad_id, title, price, url, image_url in ads:
+            print(f"\n{'='*60}")
+            print(f"E'lon #{ad_id}: {title[:50]}...")
+            print('='*60)
             # Narx va manzilni ajratish (price da "narx | manzil" formatida saqlangan)
             if " | " in price:
                 price_part, location_part = price.split(" | ", 1)
@@ -131,59 +135,109 @@ async def post_ads_to_telegram():
                 location_only = location_clean
                 time_part = ""
 
-            # Xabar matnini tayyorlash (HTML format)
-            message_text = f"""<b>{title}</b>
+            # Selenium bilan to'liq ma'lumot olish
+            try:
+                print("  🔍 Selenium bilan to'liq ma'lumot olinmoqda...")
+                details = get_ad_details(url)
+
+                if details and details['images']:
+                    # TO'LIQ VERSIYA - 5 ta rasm, tavsif, telefon, parametrlar
+                    images = details['images'][:5]
+                    description = details['description']
+                    params = details['params']
+
+                    # "ОПИСАНИЕ" ni olib tashlash
+                    if description.startswith('ОПИСАНИЕ'):
+                        description = description[8:].strip()
+
+                    # Parametrlar
+                    params_text = ""
+                    if params.get('Количество комнат'):
+                        params_text += f"\n🏠 <b>Xonalar:</b> {params['Количество комнат']}"
+                    if params.get('Этаж'):
+                        params_text += f"\n🏢 <b>Qavat:</b> {params['Этаж']}"
+                    if params.get('Этажность дома'):
+                        params_text += f" / {params['Этажность дома']}"
+                    if params.get('Телефон'):
+                        params_text += f"\n📞 <b>Telefon:</b> {params['Телефон']}"
+
+                    # Album yaratish
+                    media_group = []
+                    for idx, img_url in enumerate(images):
+                        if idx == 0:
+                            # Birinchi rasmga to'liq caption
+                            caption_text = f"""<b>{title}</b>
+
+{description[:400]}{"..." if len(description) > 400 else ""}
 
 💰 <b>Narxi:</b> {price_formatted}
-📍 <b>Manzil:</b> {location_only}"""
+📍 <b>Manzil:</b> {location_only}
+🕐 <b>Vaqt:</b> {time_part}{params_text}
 
-            if time_part:
-                message_text += f"\n🕐 <b>E'lon qo'yilgan vaqt:</b> {time_part}"
+<a href="{url}">🔗 OLX'da ko'rish</a>"""
 
-            message_text += f"""
+                            media_group.append(InputMediaPhoto(media=img_url, caption=caption_text, parse_mode='HTML'))
+                        else:
+                            media_group.append(InputMediaPhoto(media=img_url))
+
+                    # Kanalga album yuborish
+                    print(f"  📤 Kanalga {len(images)} ta rasm bilan yuborilmoqda...")
+                    await bot.send_media_group(
+                        chat_id=CHANNEL_ID,
+                        media=media_group
+                    )
+
+                    print(f"  ✅ E'lon yuborildi! ({len(images)} ta rasm)")
+
+                    # Bazada yuborilganligini belgilash
+                    cursor.execute('UPDATE ads SET is_posted_to_telegram = 1 WHERE id = ?', (ad_id,))
+                    conn.commit()
+                    posted_count += 1
+
+                    # Telegram flood control uchun katta pauza
+                    print(f"  💤 15 soniya pauza (Telegram flood control)...")
+                    await asyncio.sleep(15)
+
+                else:
+                    # Agar Selenium ishlamasa - eski usul (1 ta rasm)
+                    print("  ⚠️ Selenium ma'lumot bermadi, oddiy usul ishlatiladi...")
+
+                    message_text = f"""<b>{title}</b>
+
+💰 <b>Narxi:</b> {price_formatted}
+📍 <b>Manzil:</b> {location_only}
+🕐 <b>Vaqt:</b> {time_part}
 
 <a href="{url}">👉 Batafsil ko'rish</a>"""
 
-            try:
-                # Kanalga rasm bilan xabar yuborish
-                if image_url:
-                    # Rasm bilan yuborish
-                    await bot.send_photo(
-                        chat_id=CHANNEL_ID,
-                        photo=image_url,
-                        caption=message_text,
-                        parse_mode='HTML'
-                    )
-                else:
-                    # Rasm bo'lmasa oddiy xabar
-                    await bot.send_message(
-                        chat_id=CHANNEL_ID,
-                        text=message_text,
-                        parse_mode='HTML',
-                        disable_web_page_preview=True
-                    )
+                    if image_url:
+                        await bot.send_photo(
+                            chat_id=CHANNEL_ID,
+                            photo=image_url,
+                            caption=message_text,
+                            parse_mode='HTML'
+                        )
+                    else:
+                        await bot.send_message(
+                            chat_id=CHANNEL_ID,
+                            text=message_text,
+                            parse_mode='HTML',
+                            disable_web_page_preview=True
+                        )
 
-                # Bazada yuborilganligini belgilash
-                cursor.execute('''
-                    UPDATE ads
-                    SET is_posted_to_telegram = 1
-                    WHERE id = ?
-                ''', (ad_id,))
+                    cursor.execute('UPDATE ads SET is_posted_to_telegram = 1 WHERE id = ?', (ad_id,))
+                    conn.commit()
+                    posted_count += 1
 
-                conn.commit()
-                posted_count += 1
-
-                print(f"E'lon #{posted_count} yuborildi: {title[:50]}...")
-
-                # Telegram limitidan qochish uchun pauza (2 soniya)
-                await asyncio.sleep(2)
+                    await asyncio.sleep(2)
 
             except Exception as e:
-                print(f"E'lonni yuborishda xatolik (ID: {ad_id}): {e}")
+                print(f"  ❌ E'lonni yuborishda xatolik: {e}")
                 # Agar flood control xatolik bo'lsa, 40 soniya kutamiz
-                if "Flood control" in str(e):
-                    print("Telegram limitiga yetdi, 40 soniya kutilmoqda...")
+                if "Flood control" in str(e) or "Too Many Requests" in str(e):
+                    print("  ⏳ Telegram limitiga yetdi, 40 soniya kutilmoqda...")
                     await asyncio.sleep(40)
+                continue
 
         conn.close()
 

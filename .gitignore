@@ -36,3 +36,8 @@ Thumbs.db
 # Temporary files
 tempCodeRunnerFile.py
 test_main.py
+test_*.py
+main_test.py
+
+# ChromeDriver
+chromedriver

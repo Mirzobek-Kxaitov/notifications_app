@@ -141,7 +141,17 @@ async def post_ads_to_telegram():
                 print("  🔍 Selenium bilan to'liq ma'lumot olinmoqda...")
                 details = get_ad_details(url)
             except Exception as selenium_error:
+                error_msg = str(selenium_error)
                 print(f"  ⚠️ Selenium xatolik: {selenium_error}")
+
+                # Agar 404/410 xatolik bo'lsa - e'lon o'chirilgan, o'tkazib yuboramiz
+                if "404" in error_msg or "410" in error_msg or "Not Found" in error_msg:
+                    print(f"  🗑️ E'lon OLX'dan o'chirilgan (404/410), o'tkazib yuboriladi...")
+                    cursor.execute('UPDATE ads SET is_posted_to_telegram = 1 WHERE id = ?', (ad_id,))
+                    conn.commit()
+                    print(f"  ✅ E'lon #{ad_id} bazada 'yuborilgan' deb belgilandi")
+                    continue
+
                 print("  ℹ️ Oddiy usulda davom etamiz...")
                 details = None
 
@@ -212,6 +222,14 @@ async def post_ads_to_telegram():
                 else:
                     # Agar Selenium ishlamasa - eski usul (1 ta rasm)
                     print("  ⚠️ Selenium ma'lumot bermadi, oddiy usul ishlatiladi...")
+
+                    # Agar image_url ham bo'sh bo'lsa - bu e'lon noto'g'ri, o'tkazib yuboramiz
+                    if not image_url or not image_url.strip():
+                        print("  🗑️ E'londa rasm yo'q va parser ishlamadi, o'tkazib yuboriladi...")
+                        cursor.execute('UPDATE ads SET is_posted_to_telegram = 1 WHERE id = ?', (ad_id,))
+                        conn.commit()
+                        print(f"  ✅ E'lon #{ad_id} bazada 'yuborilgan' deb belgilandi")
+                        continue
 
                     message_text = f"""<b>{title}</b>
 

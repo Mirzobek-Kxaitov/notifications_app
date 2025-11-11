@@ -69,7 +69,7 @@ def get_ad_details(url):
 
         print(f"\nJami topilgan rasmlar: {len(images)}")
 
-        # 2. Tavsifni olish
+        # 2. Tavsifni olish va formatlash
         print("\n📝 TAVSIF:")
         print("-" * 80)
 
@@ -79,7 +79,6 @@ def get_ad_details(url):
         desc_elem = soup.find(attrs={'data-cy': 'ad_description'})
         if desc_elem:
             description = desc_elem.get_text(strip=True)
-            print(description[:300] + "..." if len(description) > 300 else description)
         else:
             # Agar topilmasa, boshqa usullar bilan
             desc_divs = soup.find_all('div', class_=re.compile(r'description|content'))
@@ -87,10 +86,33 @@ def get_ad_details(url):
                 text = div.get_text(strip=True)
                 if len(text) > 50:
                     description = text
-                    print(description[:300] + "..." if len(description) > 300 else description)
                     break
 
-        if not description:
+        if description:
+            # Tavsifni formatlash - qatorma-qator
+            # "Описание" dan keyin kelgan ma'lumotlarni ajratish
+            description = description.replace('Описание1', '\n📄 Описание:\n1')
+            description = description.replace('Описание', '\n📄 Описание:')
+            description = description.replace('Комнат:', '\n🏠 Комнат:')
+            description = description.replace('Этаж:', '\n🏢 Этаж:')
+            description = description.replace('Этажность:', '\n🏗️ Этажность:')
+            description = description.replace('Площадь:', '\n📐 Площадь:')
+            description = description.replace('Балкон:', '\n🪟 Балкон:')
+            description = description.replace('Состояние:', '\n✨ Состояние:')
+            description = description.replace('Цена аренды:', '\n💰 Цена аренды:')
+
+            # Katta harflar orasiga bo'sh joy qo'shish (masalan: "JangoxQozogiston" -> "Jangox Qozogiston")
+            # Agar katta harf boshqa katta harfdan keyin kelsa, bo'sh joy qo'shamiz
+            description = re.sub(r'([а-яёА-ЯЁa-zA-Z])([А-ЯЁA-Z][а-яёa-z])', r'\1 \2', description)
+
+            # "—" belgisini yangi qatorga o'tkazish
+            description = description.replace('—', '\n—')
+
+            # Ko'p bo'sh qatorlarni bitta qatorga qisqartirish
+            description = re.sub(r'\n\s*\n', '\n', description)
+
+            print(description[:400] + "..." if len(description) > 400 else description)
+        else:
             print("Tavsif topilmadi")
 
         # 3. Parametrlarni olish

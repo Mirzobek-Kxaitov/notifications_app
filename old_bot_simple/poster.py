@@ -152,8 +152,13 @@ async def post_ads_to_telegram():
                     description = details['description']
                     params = details['params']
 
-                    # "ОПИСАНИЕ" ni olib tashlash
-                    if description.startswith('ОПИСАНИЕ'):
+                    # Tavsifni tozalash - boshidagi va oxiridagi bo'sh joylarni olib tashlash
+                    description = description.strip()
+
+                    # Agar birinchi qator faqat "Описание" bo'lsa, olib tashlash
+                    if description.startswith('📄 Описание:'):
+                        description = description[13:].strip()
+                    elif description.startswith('Описание'):
                         description = description[8:].strip()
 
                     # Parametrlar

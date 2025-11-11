@@ -159,7 +159,9 @@ def get_ad_details(url):
             params['Телефон'] = ', '.join(phone_numbers[:3])
             print(f"Телефон: {params['Телефон']}")
         else:
-            print("Telefon topilmadi (tugma bosilmadi)")
+            print("⚠️ Telefon topilmadi (tugma bosilmadi)")
+            print("ℹ️ Requests+BeautifulSoup JavaScript tugmalarini bosa olmaydi")
+            print("💡 Telefon ko'rish uchun e'lon linkiga kiring")
 
         return {
             'images': images,

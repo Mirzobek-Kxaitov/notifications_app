@@ -42,7 +42,10 @@ def parse_all_ads():
         current_hour = now.hour
         current_minute = now.minute
 
-        # Har bir karta uchun ma'lumotlarni ajratib olish va bazaga saqlash
+        # E'lonlarni vaqt bilan saqlash (vaqt bo'yicha tartiblash uchun)
+        ads_with_time = []
+
+        # Har bir karta uchun ma'lumotlarni ajratib olish
         for card in cards:
             # Manzil va Sana (avval tekshirish uchun)
             location_tag = card.find('p', {'data-testid': 'location-date'})
@@ -109,19 +112,32 @@ def parse_all_ads():
                 elif img_src:
                     image_url = img_src
 
-            # Yangi e'lonni bazaga qo'shish
+            # E'lonni vaqt bilan ro'yxatga qo'shish
+            ads_with_time.append({
+                'title': title,
+                'price': price,
+                'location_date': location_date,
+                'link': link,
+                'image_url': image_url,
+                'ad_time': ad_hour * 60 + ad_minute  # Daqiqalarda vaqt
+            })
+
+        # E'lonlarni vaqt bo'yicha tartiblash (eskidan yangiga)
+        ads_with_time.sort(key=lambda x: x['ad_time'])
+
+        # Endi bazaga tartibda qo'shish
+        for ad in ads_with_time:
             cursor.execute('''
                 INSERT INTO ads (title, price, url, image_url, is_posted_to_telegram)
                 VALUES (?, ?, ?, ?, 0)
-            ''', (title, price + " | " + location_date, link, image_url))
-
+            ''', (ad['title'], ad['price'] + " | " + ad['location_date'], ad['link'], ad['image_url']))
             new_ads_count += 1
 
         # O'zgarishlarni saqlash
         conn.commit()
         conn.close()
 
-        print(f"✅ Bazaga {new_ads_count} ta yangi e'lon qo'shildi!")
+        print(f"✅ Bazaga {new_ads_count} ta yangi e'lon qo'shildi (vaqt bo'yicha tartiblangan)!")
 
     except requests.exceptions.RequestException as e:
         print(f"❌ Tarmoq xatolik: {e}")

@@ -6,7 +6,7 @@ import requests
 import os
 import re
 from dotenv import load_dotenv
-from selenium_parser import get_ad_details
+from simple_parser import get_ad_details
 
 # .env fayldan o'qish
 load_dotenv()
@@ -136,10 +136,16 @@ async def post_ads_to_telegram():
                 time_part = ""
 
             # Selenium bilan to'liq ma'lumot olish
+            details = None
             try:
                 print("  🔍 Selenium bilan to'liq ma'lumot olinmoqda...")
                 details = get_ad_details(url)
+            except Exception as selenium_error:
+                print(f"  ⚠️ Selenium xatolik: {selenium_error}")
+                print("  ℹ️ Oddiy usulda davom etamiz...")
+                details = None
 
+            try:
                 if details and details['images']:
                     # TO'LIQ VERSIYA - 5 ta rasm, tavsif, telefon, parametrlar
                     images = details['images'][:5]

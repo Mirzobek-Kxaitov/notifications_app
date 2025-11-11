@@ -63,11 +63,11 @@ def parse_all_ads():
             ad_hour = int(time_match.group(1))
             ad_minute = int(time_match.group(2))
 
-            # Faqat oxirgi 6 soat ichidagi e'lonlarni olish
+            # Faqat oxirgi 2 soat ichidagi e'lonlarni olish
             time_diff_minutes = (current_hour * 60 + current_minute) - (ad_hour * 60 + ad_minute)
 
-            if time_diff_minutes < 0 or time_diff_minutes > 360:
-                continue  # 6 soatdan eski yoki kelajakdagi e'lon
+            if time_diff_minutes < 0 or time_diff_minutes > 120:
+                continue  # 2 soatdan eski yoki kelajakdagi e'lon
 
             # Havola
             link_tag = card.find('a', href=True)
